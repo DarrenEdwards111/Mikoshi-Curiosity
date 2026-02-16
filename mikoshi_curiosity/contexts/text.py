@@ -23,7 +23,15 @@ class TextSpace(StateSpace):
         Maximum vocabulary size for TF-IDF.
     """
 
-    def __init__(self, documents: List[Dict], max_features: int = 500):
+    def __init__(self, documents, max_features: int = 500):
+        # Accept plain strings or dicts
+        normalized = []
+        for i, doc in enumerate(documents):
+            if isinstance(doc, str):
+                normalized.append({"id": str(i), "text": doc, "metadata": {}})
+            else:
+                normalized.append(doc)
+        documents = normalized
         self.documents = {doc["id"]: doc for doc in documents}
         self._doc_ids = [doc["id"] for doc in documents]
         self.max_features = max_features
