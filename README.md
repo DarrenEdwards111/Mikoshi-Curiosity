@@ -1,4 +1,8 @@
-# 🔭 Mikoshi Curiosity
+# Mikoshi Curiosity
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/DarrenEdwards111/Mikoshi-Curiosity/main/curiosity-logo.jpg" alt="Mikoshi Curiosity" width="400">
+</p>
 
 > **Explore any state space. Find what you didn't know you were looking for.**
 
