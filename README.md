@@ -239,6 +239,19 @@ satisfiability equals that answer. It also records the quantitative limitation:
 `N` forced orientation bits require `3N` clauses, so this embedding alone gives
 constant debt density rather than superpolynomial amplification.
 
+### Amplification obstruction audit
+
+`mikoshi_curiosity.amplification` constructs the explicit shared DAG for the
+slice predicate: `N` parallel `data_j AND selector_j` gates followed by an OR
+tree.  It uses exactly `2N - 1` bounded-fanin gates and is exhaustively checked
+on every row and legal selector through the configured finite bound.  Thus the
+split INDEX family has a matching linear general-circuit upper bound and cannot
+be the compression-resistant family needed for a P-vs-NP proof.
+
+```bash
+PYTHONPATH=. python3 examples/amplification_audit.py
+```
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)

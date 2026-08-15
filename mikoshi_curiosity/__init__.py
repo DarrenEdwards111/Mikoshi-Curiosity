@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -54,6 +54,13 @@ from mikoshi_curiosity.sat_queries import (
     split_index_cnf_correct,
     split_index_cnf_parts,
     split_index_cnf_size,
+)
+from mikoshi_curiosity.amplification import (
+    AmplificationAudit,
+    one_hot,
+    run_amplification_audit,
+    shared_index_dag,
+    shared_index_gate_count,
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
@@ -140,6 +147,11 @@ __all__ = [
     "split_index_cnf_correct",
     "split_index_cnf_parts",
     "split_index_cnf_size",
+    "AmplificationAudit",
+    "one_hot",
+    "run_amplification_audit",
+    "shared_index_dag",
+    "shared_index_gate_count",
     "AssumptionChallengeMutator",
     "AssumptionAuditCritic",
     "CallableConjectureGenerator",
