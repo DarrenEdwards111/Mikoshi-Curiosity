@@ -119,6 +119,55 @@ result = engine.explore(space.get_state("alice"), budget=100)
 
 ## API Reference
 
+## 🧪 Research Lab: Generate, Attack, and Certify Conjectures
+
+The research extension turns Curiosity from a closed parameter explorer into
+an open-ended conjecture laboratory.  It provides:
+
+- `Conjecture` — typed theorem intermediate representation;
+- `ConceptGraph` — fuzzy semantic retrieval and explicit analogy edges;
+- `ResearchStateSpace` — dynamic generation beyond a pre-enumerated grid;
+- generator and mutator protocols for LLM or local proposal engines;
+- critic plugins for circularity, completeness, and known counterexamples;
+- proof-adapter plugins for Lean, SMT, test suites, or any local checker;
+- an auditable `CandidateEvaluation` stored on every generated state.
+
+```python
+from mikoshi_curiosity import (
+    Concept, ConceptGraph, Conjecture, CuriosityEngine, ResearchStateSpace,
+)
+
+graph = ConceptGraph([
+    Concept("monogamy", "one resource cannot serve two independent views"),
+    Concept("direct sum", "independent tasks require additive cost"),
+    Concept("pebbling", "time-space tradeoffs on DAGs"),
+])
+
+space = ResearchStateSpace(graph)
+seed = space.add(Conjecture(
+    name="Anti-sharing lemma",
+    statement="Independent residuals require fresh decision-sensitive cost.",
+    definitions=("Residual debt is the number of unresolved row pairs.",),
+    assumptions=("Residual rows are injective.",),
+    proof_sketch=("Define the charge.", "Prove composition.", "Integrate."),
+))
+
+result = CuriosityEngine(space, strategy="balanced").explore(seed, budget=50)
+for discovery in result.top(5):
+    print(discovery.state.metadata["evaluation"])
+```
+
+`CommandProofAdapter` executes an argument vector without a shell and replaces
+`{file}` with a temporary rendered candidate.  This supports Lean/SMT adapters
+without introducing an API dependency into the core package.  An LLM-backed
+generator can implement the `ConjectureGenerator.generate` protocol and be
+injected into `ResearchStateSpace`. `CallableConjectureGenerator` and
+`CallableResearchCritic` provide lightweight adapters for model APIs, local
+inference servers, retrieval pipelines, and organization-specific evaluators.
+
+See [`examples/research_lab.py`](examples/research_lab.py) for a complete
+offline example.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
