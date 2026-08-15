@@ -231,6 +231,14 @@ This is a family-of-executions theorem.  It does not assert that one SAT run
 materializes every answer, nor that a general circuit cannot amortize or share
 work across the family.
 
+Version 0.6 also includes a genuinely local split construction. Alice emits
+only unit clauses fixing the INDEX data variables; Bob emits only unit clauses
+fixing a one-hot selector; fixed public clauses enforce `selector -> data`.
+Neither private encoder computes the selected answer. The bounded audit proves
+satisfiability equals that answer. It also records the quantitative limitation:
+`N` forced orientation bits require `3N` clauses, so this embedding alone gives
+constant debt density rather than superpolynomial amplification.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)

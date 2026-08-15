@@ -10,7 +10,9 @@ for width, copies in ((1, 1), (2, 1), (2, 2), (3, 2)):
         f"bits={bits}: correctness={result.correctness.status} "
         f"({result.correctness.checked}), full-family={result.full_family_injective.status} "
         f"({result.full_family_injective.checked}), one-query={result.single_query_injective.status} "
-        f"({result.single_query_injective.checked})"
+        f"({result.single_query_injective.checked}), split-cnf={result.split_cnf_correctness.status} "
+        f"({result.split_cnf_correctness.checked}), clauses={result.size.clauses}, "
+        f"forced-bits={result.size.forced_orientation_bits}"
     )
     if result.single_query_injective.counterexample:
         print(f"  one-query collision: {dict(result.single_query_injective.counterexample)}")

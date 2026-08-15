@@ -3,6 +3,7 @@ import pytest
 from mikoshi_curiosity.sat_queries import (
     IndexSATQuery,
     bit_cnf,
+    brute_cnf_satisfiable,
     cnf_satisfiable,
     correctness_forces_orientation,
     index_answer,
@@ -10,6 +11,9 @@ from mikoshi_curiosity.sat_queries import (
     query_family,
     run_sat_orientation_experiment,
     sat_orientation,
+    split_index_cnf,
+    split_index_cnf_parts,
+    split_index_cnf_size,
 )
 
 
@@ -30,6 +34,24 @@ def test_sat_orientation_recovers_the_flattened_index_row():
     assert correctness_forces_orientation(data, 2, 2)
 
 
+def test_split_cnf_is_locally_constructed_and_does_not_precompute_answer():
+    data = (False, True)
+    alice0, bob0, public0 = split_index_cnf_parts(data, 2, 1, IndexSATQuery(0, 0))
+    alice1, bob1, public1 = split_index_cnf_parts(data, 2, 1, IndexSATQuery(0, 1))
+    assert alice0 == alice1
+    assert bob0 != bob1
+    assert public0 == public1
+    assert not brute_cnf_satisfiable(split_index_cnf(data, 2, 1, IndexSATQuery(0, 0)))
+    assert brute_cnf_satisfiable(split_index_cnf(data, 2, 1, IndexSATQuery(0, 1)))
+
+
+def test_split_cnf_size_exposes_linear_amplification_limit():
+    size = split_index_cnf_size(3, 2)
+    assert (size.data_bits, size.variables, size.clauses, size.literals) == (6, 12, 18, 24)
+    assert size.forced_orientation_bits == 6
+    assert size.debt_per_clause == 1 / 3
+
+
 def test_orientation_is_injective_but_one_query_is_not():
     assert orientation_is_injective((False, False), (False, True), 2, 1)
     assert index_answer((False, False), 2, 1, IndexSATQuery(0, 0)) == index_answer(
@@ -42,6 +64,7 @@ def test_finite_orientation_audit(width, copies):
     result = run_sat_orientation_experiment(width, copies)
     assert result.correctness.status == "exhausted"
     assert result.full_family_injective.status == "exhausted"
+    assert result.split_cnf_correctness.status == "exhausted"
     expected = "exhausted" if width * copies == 1 else "counterexample"
     assert result.single_query_injective.status == expected
 
