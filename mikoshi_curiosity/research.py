@@ -386,12 +386,13 @@ class ResearchStateSpace(StateSpace):
 
     def __init__(self, graph: ConceptGraph, generator: Optional[ConjectureGenerator] = None,
                  mutators: Sequence[ConjectureMutator] = (), evaluator: Optional[ResearchEvaluator] = None,
-                 embedder: Optional[Callable[[str], np.ndarray]] = None):
+                 embedder: Optional[Callable[[str], np.ndarray]] = None, archive=None):
         self.graph = graph
         self.generator = generator or TemplateGenerator()
         self.mutators = tuple(mutators) or (FuzzyAnalogyMutator(), AssumptionChallengeMutator())
         self.evaluator = evaluator or ResearchEvaluator((CompletenessCritic(), CircularityCritic(), KnownFailureCritic()))
         self.embedder = embedder or graph.embedder
+        self.archive = archive
         self._states: Dict[str, State] = {}
         self._conjectures: Dict[str, Conjecture] = {}
 
@@ -400,6 +401,8 @@ class ResearchStateSpace(StateSpace):
         if existing is not None:
             return existing
         evaluation = self.evaluator.evaluate(conjecture)
+        if self.archive is not None:
+            self.archive.save(conjecture, evaluation)
         features = {
             "name": conjecture.name,
             "statement": conjecture.statement,

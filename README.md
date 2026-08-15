@@ -168,6 +168,32 @@ inference servers, retrieval pipelines, and organization-specific evaluators.
 See [`examples/research_lab.py`](examples/research_lab.py) for a complete
 offline example.
 
+### Research Lab v0.3
+
+Version 0.3 adds the executable end-to-end components:
+
+- `LLMConjectureGenerator` with dependency-free Ollama, OpenAI, and Anthropic
+  providers and strict typed-JSON validation;
+- `ResearchArchive`, a persistent SQLite record of candidates, critiques,
+  proof results, and nearby historical failures;
+- `FiniteModelFinder` and `FiniteModelProofAdapter` for exhaustive bounded
+  counterexample search (finite exhaustion is explicitly **not** called a
+  global proof);
+- `LeanRepairAdapter` plus `LLMLeanRepairer` for compile, diagnose, repair,
+  and retry loops with configurable budgets;
+- optional archive integration in `ResearchStateSpace`, allowing generated
+  states and failed routes to survive across runs.
+
+Run the live local-model INDEX-to-SAT workload with:
+
+```bash
+OLLAMA_MODEL=llama3.2:latest python examples/index_sat_research_v03.py
+```
+
+The model proposes candidates; deterministic critics and model finders try to
+break them; Lean or another command checker is the trust boundary. A survivor
+is still a conjecture until an attached proof adapter verifies it.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
