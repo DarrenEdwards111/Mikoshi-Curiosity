@@ -214,6 +214,23 @@ Run the exhaustive small-model audit with:
 python examples/debt_decomposition_experiment.py
 ```
 
+### SAT residual-query orientations
+
+`mikoshi_curiosity.sat_queries` turns every selector of a direct-sum INDEX row
+into a concrete variable-free CNF.  The full family of exact SAT answers is
+the row itself, so SAT correctness forces an injective external orientation
+vector without assuming a circuit lower bound.  The accompanying finite-model
+audit also finds the crucial boundary: one fixed query does not distinguish
+the row once it contains more than one bit.
+
+```bash
+python examples/sat_orientation_experiment.py
+```
+
+This is a family-of-executions theorem.  It does not assert that one SAT run
+materializes every answer, nor that a general circuit cannot amortize or share
+work across the family.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)

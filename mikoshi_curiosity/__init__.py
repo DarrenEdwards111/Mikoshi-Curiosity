@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -35,6 +35,19 @@ from mikoshi_curiosity.debt import (
     run_debt_experiment,
     terminal_rows_distinguished,
     unresolved_debt,
+)
+from mikoshi_curiosity.sat_queries import (
+    IndexSATQuery,
+    SATOrientationExperiment,
+    bit_cnf,
+    cnf_satisfiable,
+    correctness_forces_orientation,
+    index_answer,
+    index_query_cnf,
+    orientation_is_injective,
+    query_family,
+    run_sat_orientation_experiment,
+    sat_orientation,
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
@@ -104,6 +117,17 @@ __all__ = [
     "run_debt_experiment",
     "terminal_rows_distinguished",
     "unresolved_debt",
+    "IndexSATQuery",
+    "SATOrientationExperiment",
+    "bit_cnf",
+    "cnf_satisfiable",
+    "correctness_forces_orientation",
+    "index_answer",
+    "index_query_cnf",
+    "orientation_is_injective",
+    "query_family",
+    "run_sat_orientation_experiment",
+    "sat_orientation",
     "AssumptionChallengeMutator",
     "AssumptionAuditCritic",
     "CallableConjectureGenerator",
