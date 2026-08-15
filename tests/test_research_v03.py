@@ -5,6 +5,7 @@ from mikoshi_curiosity import (
     AssumptionAuditCritic,
     CallableResearchCritic,
     CallableTextProvider,
+    CodexCLIProvider,
     Concept,
     Conjecture,
     Critique,
@@ -64,6 +65,19 @@ def test_ollama_provider_uses_json_mode():
     provider = OllamaProvider(model="test", transport=transport)
     assert provider.complete("prompt").startswith("{")
     assert seen == {"model": "test", "prompt": "prompt", "stream": False, "format": "json"}
+
+
+def test_codex_cli_provider_preserves_requested_model():
+    seen = {}
+    def execute(command, prompt, timeout):
+        seen["command"] = command
+        seen["prompt"] = prompt
+        seen["timeout"] = timeout
+        return '{"conjectures": []}'
+    provider = CodexCLIProvider(model="gpt-5.6-sol", execute=execute)
+    assert provider.complete("invent") == '{"conjectures": []}'
+    assert "gpt-5.6-sol" in seen["command"]
+    assert seen["prompt"] == "invent"
 
 
 def test_archive_persists_evidence_and_retrieves_failures(tmp_path):

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import replace
@@ -22,6 +25,42 @@ class CallableTextProvider:
 
     def complete(self, prompt: str) -> str:
         return self._complete(prompt)
+
+
+class CodexCLIProvider:
+    """Use an authenticated local Codex CLI as the research generator."""
+
+    def __init__(self, model: str = "gpt-5.6-sol", executable: str = "codex",
+                 timeout: float = 300.0,
+                 execute: Optional[Callable[[Sequence[str], str, float], str]] = None):
+        self.model = model
+        self.executable = executable
+        self.timeout = timeout
+        self.execute = execute or self._execute
+
+    @staticmethod
+    def _execute(command: Sequence[str], prompt: str, timeout: float) -> str:
+        environment = os.environ.copy()
+        environment.pop("CODEX_HOME", None)
+        with tempfile.TemporaryDirectory(prefix="mikoshi-codex-") as directory:
+            output = os.path.join(directory, "last-message.txt")
+            run = subprocess.run(
+                [*command, "--output-last-message", output, prompt],
+                text=True, capture_output=True, timeout=timeout, check=False,
+                env=environment,
+            )
+            if run.returncode != 0:
+                diagnostics = (run.stdout + run.stderr).strip()
+                raise RuntimeError(f"Codex CLI failed with status {run.returncode}: {diagnostics}")
+            with open(output, "r", encoding="utf-8") as handle:
+                return handle.read()
+
+    def complete(self, prompt: str) -> str:
+        command = (
+            self.executable, "exec", "--ephemeral", "-m", self.model,
+            "-s", "read-only", "--skip-git-repo-check",
+        )
+        return self.execute(command, prompt, self.timeout)
 
 
 class JSONHTTPProvider:

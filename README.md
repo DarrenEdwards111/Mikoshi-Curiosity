@@ -172,8 +172,8 @@ offline example.
 
 Version 0.3 adds the executable end-to-end components:
 
-- `LLMConjectureGenerator` with dependency-free Ollama, OpenAI, and Anthropic
-  providers and strict typed-JSON validation;
+- `LLMConjectureGenerator` with Codex CLI, dependency-free Ollama, OpenAI, and
+  Anthropic providers and strict typed-JSON validation;
 - `ResearchArchive`, a persistent SQLite record of candidates, critiques,
   proof results, and nearby historical failures;
 - `FiniteModelFinder` and `FiniteModelProofAdapter` for exhaustive bounded
@@ -187,8 +187,11 @@ Version 0.3 adds the executable end-to-end components:
 Run the live local-model INDEX-to-SAT workload with:
 
 ```bash
-OLLAMA_MODEL=llama3.2:latest python examples/index_sat_research_v03.py
+CODEX_MODEL=gpt-5.6-sol python examples/index_sat_research_v03.py
 ```
+
+For the local fallback use `RESEARCH_PROVIDER=ollama` and optionally set
+`OLLAMA_MODEL` and `OLLAMA_URL`.
 
 The model proposes candidates; deterministic critics and model finders try to
 break them; Lean or another command checker is the trust boundary. A survivor

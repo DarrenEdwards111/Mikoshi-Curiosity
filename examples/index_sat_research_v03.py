@@ -1,15 +1,14 @@
 """Run an LLM-driven research loop on the INDEX-to-SAT lift frontier.
 
-Requires a local Ollama server by default. Set OLLAMA_MODEL and OLLAMA_URL to
-select another locally installed model/server. The default is deliberately a
-small model so the example runs on modest local hardware.
+Uses the authenticated Codex CLI with GPT-5.6 Sol by default. Set
+RESEARCH_PROVIDER=ollama for a fully local fallback.
 """
 
 import os
 from pathlib import Path
 
 from mikoshi_curiosity import (
-    AssumptionAuditCritic, CircularityCritic, CompletenessCritic, Concept, ConceptGraph, Conjecture,
+    AssumptionAuditCritic, CircularityCritic, CodexCLIProvider, CompletenessCritic, Concept, ConceptGraph, Conjecture,
     CuriosityEngine, KnownFailureCritic, LLMConjectureGenerator, OllamaProvider,
     ResearchArchive, ResearchEvaluator, ResearchStateSpace,
 )
@@ -24,10 +23,13 @@ graph = ConceptGraph([
 ])
 
 archive_path = Path(os.environ.get("RESEARCH_ARCHIVE", "index-sat-research.db"))
-provider = OllamaProvider(
-    model=os.environ.get("OLLAMA_MODEL", "llama3.2:latest"),
-    base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434"),
-)
+if os.environ.get("RESEARCH_PROVIDER", "codex").lower() == "ollama":
+    provider = OllamaProvider(
+        model=os.environ.get("OLLAMA_MODEL", "llama3.2:latest"),
+        base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434"),
+    )
+else:
+    provider = CodexCLIProvider(model=os.environ.get("CODEX_MODEL", "gpt-5.6-sol"))
 
 with ResearchArchive(archive_path) as archive:
     generator = LLMConjectureGenerator(provider, failure_memory=archive)

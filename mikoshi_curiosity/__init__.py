@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -12,6 +12,7 @@ from mikoshi_curiosity.lean_repair import LeanRepairAdapter
 from mikoshi_curiosity.llm import (
     AnthropicProvider,
     CallableTextProvider,
+    CodexCLIProvider,
     LLMConjectureGenerator,
     LLMLeanRepairer,
     OllamaProvider,
@@ -73,6 +74,7 @@ __all__ = [
     "LeanRepairAdapter",
     "AnthropicProvider",
     "CallableTextProvider",
+    "CodexCLIProvider",
     "LLMConjectureGenerator",
     "LLMLeanRepairer",
     "OllamaProvider",
