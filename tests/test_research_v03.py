@@ -2,6 +2,7 @@ import json
 import sys
 
 from mikoshi_curiosity import (
+    AssumptionAuditCritic,
     CallableResearchCritic,
     CallableTextProvider,
     Concept,
@@ -45,6 +46,16 @@ def test_llm_generator_parses_typed_json_and_tracks_parent():
     assert "llm-generated" in result[0].provenance
 
 
+def test_llm_generator_skips_malformed_siblings():
+    provider = CallableTextProvider(lambda _: json.dumps({"conjectures": [
+        {"name": "missing statement"},
+        {"name": "bad typed list", "statement": "bad", "definitions": "not-a-list"},
+        {"name": "valid", "statement": "A implies A.", "proof_sketch": ["identity"]},
+    ]}))
+    result = LLMConjectureGenerator(provider).generate(candidate(), (), 5)
+    assert [item.name for item in result] == ["valid"]
+
+
 def test_ollama_provider_uses_json_mode():
     seen = {}
     def transport(url, headers, payload, timeout):
@@ -67,6 +78,14 @@ def test_archive_persists_evidence_and_retrieves_failures(tmp_path):
         failures = archive.similar_failures("proposed invariant on finite models")
         assert failures[0]["name"] == rejected.name
         assert failures[0]["reason"] == "counterexample found"
+
+
+def test_assumption_audit_rejects_configured_load_bearing_premise():
+    critic = AssumptionAuditCritic({"cross-frame monogamy": "must be derived"})
+    conjecture = Conjecture("circular", "claim", assumptions=("Assume cross-frame monogamy.",))
+    issues = critic.review(conjecture)
+    assert issues[0].fatal
+    assert issues[0].message == "must be derived"
 
 
 def test_finite_model_finder_returns_concrete_counterexample():

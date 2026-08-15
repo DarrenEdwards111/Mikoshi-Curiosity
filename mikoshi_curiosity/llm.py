@@ -155,16 +155,20 @@ counterexample routes. State every load-bearing assumption explicitly. JSON only
         generated = []
         for raw in items[:max(0, n)]:
             if not isinstance(raw, dict) or not isinstance(raw.get("name"), str) or not isinstance(raw.get("statement"), str):
-                raise ValueError("each conjecture requires string name and statement")
-            generated.append(Conjecture(
-                name=raw["name"], statement=raw["statement"],
-                definitions=_strings(raw.get("definitions")),
-                assumptions=_strings(raw.get("assumptions")),
-                proof_sketch=_strings(raw.get("proof_sketch")),
-                tags=_strings(raw.get("tags")),
-                provenance=seed.provenance + ("llm-generated",),
-                parent_id=seed.id, generation=seed.generation + 1,
-            ))
+                continue
+            try:
+                conjecture = Conjecture(
+                    name=raw["name"], statement=raw["statement"],
+                    definitions=_strings(raw.get("definitions")),
+                    assumptions=_strings(raw.get("assumptions")),
+                    proof_sketch=_strings(raw.get("proof_sketch")),
+                    tags=_strings(raw.get("tags")),
+                    provenance=seed.provenance + ("llm-generated",),
+                    parent_id=seed.id, generation=seed.generation + 1,
+                )
+            except ValueError:
+                continue
+            generated.append(conjecture)
         return generated
 
 

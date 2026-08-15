@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -26,6 +26,7 @@ from mikoshi_curiosity.model_finder import (
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
+    AssumptionAuditCritic,
     CallableConjectureGenerator,
     CallableProofAdapter,
     CallableResearchCritic,
@@ -82,6 +83,7 @@ __all__ = [
     "FiniteModelSpec",
     "ModelSearchResult",
     "AssumptionChallengeMutator",
+    "AssumptionAuditCritic",
     "CallableConjectureGenerator",
     "CallableProofAdapter",
     "CallableResearchCritic",

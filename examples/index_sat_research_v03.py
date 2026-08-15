@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from mikoshi_curiosity import (
-    CircularityCritic, CompletenessCritic, Concept, ConceptGraph, Conjecture,
+    AssumptionAuditCritic, CircularityCritic, CompletenessCritic, Concept, ConceptGraph, Conjecture,
     CuriosityEngine, KnownFailureCritic, LLMConjectureGenerator, OllamaProvider,
     ResearchArchive, ResearchEvaluator, ResearchStateSpace,
 )
@@ -31,7 +31,18 @@ provider = OllamaProvider(
 
 with ResearchArchive(archive_path) as archive:
     generator = LLMConjectureGenerator(provider, failure_memory=archive)
-    evaluator = ResearchEvaluator((CompletenessCritic(), CircularityCritic(), KnownFailureCritic()))
+    evaluator = ResearchEvaluator((
+        CompletenessCritic(),
+        CircularityCritic(),
+        KnownFailureCritic(),
+        AssumptionAuditCritic({
+            "cross-frame monogamy": "assumes the missing general-circuit monogamy theorem",
+            "monogamy assumption": "assumes the missing general-circuit monogamy theorem",
+            "charge independent orientation": "assumes the fanout-stable charge that must be derived",
+            "arbitrary sat circuit": "does not derive the claimed property for arbitrary SAT circuits",
+            "universal semantic cut": "assumes the universal bounded cut",
+        }),
+    ))
     space = ResearchStateSpace(graph, generator=generator, evaluator=evaluator, archive=archive)
     seed = space.add(Conjecture(
         "Unrestricted INDEX-to-SAT lift frontier",

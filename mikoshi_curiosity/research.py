@@ -257,6 +257,24 @@ class KnownFailureCritic:
                 for pattern, message in self.rules.items() if pattern in text]
 
 
+class AssumptionAuditCritic:
+    """Reject explicitly configured load-bearing assumption patterns."""
+
+    name = "assumption-audit"
+
+    def __init__(self, rules: Mapping[str, str]):
+        self.rules = {pattern.lower(): message for pattern, message in rules.items()}
+
+    def review(self, conjecture: Conjecture) -> Sequence[Critique]:
+        issues = []
+        for assumption in conjecture.assumptions:
+            lowered = assumption.lower()
+            for pattern, message in self.rules.items():
+                if pattern in lowered:
+                    issues.append(Critique(self.name, "error", message, assumption))
+        return issues
+
+
 class CompletenessCritic:
     """Requires a conjecture to expose assumptions and a proof route."""
 
