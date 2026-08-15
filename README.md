@@ -197,6 +197,23 @@ The model proposes candidates; deterministic critics and model finders try to
 break them; Lean or another command checker is the trust boundary. A survivor
 is still a conjecture until an attached proof adapter verifies it.
 
+### Fanout-neutral debt experiment
+
+`mikoshi_curiosity.debt` implements residual-row debt as the logarithmic gap
+between the number of rows and the equivalence classes induced by observed
+boundary signatures. It separates two facts:
+
+- **valid local inequality:** adding one Boolean gate can at most double the
+  class count, and duplicating its output through fanout adds no distinctions;
+- **invalid terminal-load inference:** a single decision bit does not, from
+  correctness alone, distinguish every residual row.
+
+Run the exhaustive small-model audit with:
+
+```bash
+python examples/debt_decomposition_experiment.py
+```
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)

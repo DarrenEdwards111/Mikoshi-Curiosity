@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -24,6 +24,17 @@ from mikoshi_curiosity.model_finder import (
     FiniteModelProofAdapter,
     FiniteModelSpec,
     ModelSearchResult,
+)
+from mikoshi_curiosity.debt import (
+    DebtExperiment,
+    class_count,
+    duplicate_fanout,
+    fanout_is_information_neutral,
+    gate_refinement_bound,
+    refine_signatures,
+    run_debt_experiment,
+    terminal_rows_distinguished,
+    unresolved_debt,
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
@@ -84,6 +95,15 @@ __all__ = [
     "FiniteModelProofAdapter",
     "FiniteModelSpec",
     "ModelSearchResult",
+    "DebtExperiment",
+    "class_count",
+    "duplicate_fanout",
+    "fanout_is_information_neutral",
+    "gate_refinement_bound",
+    "refine_signatures",
+    "run_debt_experiment",
+    "terminal_rows_distinguished",
+    "unresolved_debt",
     "AssumptionChallengeMutator",
     "AssumptionAuditCritic",
     "CallableConjectureGenerator",
