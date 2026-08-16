@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -61,6 +61,13 @@ from mikoshi_curiosity.amplification import (
     run_amplification_audit,
     shared_index_dag,
     shared_index_gate_count,
+)
+from mikoshi_curiosity.tableau import (
+    TableauRecoveryAudit,
+    counter_step,
+    counter_trace,
+    ripple_transition_gate_bound,
+    run_tableau_recovery_audit,
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
@@ -152,6 +159,11 @@ __all__ = [
     "run_amplification_audit",
     "shared_index_dag",
     "shared_index_gate_count",
+    "TableauRecoveryAudit",
+    "counter_step",
+    "counter_trace",
+    "ripple_transition_gate_bound",
+    "run_tableau_recovery_audit",
     "AssumptionChallengeMutator",
     "AssumptionAuditCritic",
     "CallableConjectureGenerator",

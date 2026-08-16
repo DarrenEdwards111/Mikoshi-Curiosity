@@ -252,6 +252,19 @@ be the compression-resistant family needed for a P-vs-NP proof.
 PYTHONPATH=. python3 examples/amplification_audit.py
 ```
 
+### Succinct-tableau repeated-recovery audit
+
+`mikoshi_curiosity.tableau` tests the proposal that a narrow reusable
+transition computation can force many semantic recoveries. A ripple-counter
+gadget visits `2^w` states with `O(w)` reusable hardware and a `w`-bit
+frontier, but an ordinary acyclic circuit or Cook--Levin CNF must unroll all
+steps, costing `Omega(w * steps)`. Exponential recovery therefore either uses
+exponential time/tableau size or leaves the ordinary SAT/P-time setting.
+
+```bash
+PYTHONPATH=. python3 examples/tableau_recovery_experiment.py
+```
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
