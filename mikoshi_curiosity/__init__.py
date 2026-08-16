@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -68,6 +68,14 @@ from mikoshi_curiosity.tableau import (
     counter_trace,
     ripple_transition_gate_bound,
     run_tableau_recovery_audit,
+)
+from mikoshi_curiosity.solver_capture import (
+    CaptureAudit,
+    audit_hankel_capture,
+    capture_doubles,
+    hankel_load,
+    kronecker,
+    rational_rank,
 )
 from mikoshi_curiosity.research import (
     AssumptionChallengeMutator,
@@ -164,6 +172,12 @@ __all__ = [
     "counter_trace",
     "ripple_transition_gate_bound",
     "run_tableau_recovery_audit",
+    "CaptureAudit",
+    "audit_hankel_capture",
+    "capture_doubles",
+    "hankel_load",
+    "kronecker",
+    "rational_rank",
     "AssumptionChallengeMutator",
     "AssumptionAuditCritic",
     "CallableConjectureGenerator",

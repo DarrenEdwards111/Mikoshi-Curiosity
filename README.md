@@ -265,6 +265,20 @@ exponential time/tableau size or leaves the ordinary SAT/P-time setting.
 PYTHONPATH=. python3 examples/tableau_recovery_experiment.py
 ```
 
+### Gödel solver-capture audit
+
+`mikoshi_curiosity.solver_capture` evaluates the strongest finite-testable
+candidate from the Gödel-tower research run: rational rank of the semantic
+prefix/continuation relation. The measure is invariant under renamed or
+duplicated gates. Exact finite arithmetic confirms that a genuine independent
+Kronecker product squares rank and supplies the desired load recurrence, while
+copying or re-encoding the old relation does not. Product capture is therefore
+the explicit missing theorem; it cannot be inferred from one-bit correctness.
+
+```bash
+PYTHONPATH=. python3 examples/solver_capture_experiment.py
+```
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
