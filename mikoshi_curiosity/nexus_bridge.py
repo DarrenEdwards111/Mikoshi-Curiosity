@@ -30,6 +30,9 @@ def handle(store: CognitiveStore, request):
                 "snapshot": _serialise_snapshot(store.snapshot(request["project_id"]))}
     if action == "delete_project":
         return {"deleted": store.delete_project(request["project_id"])}
+    if action == "capabilities":
+        registry = ResearchLabToolRegistry(store, request["project_id"])
+        return {"capabilities": registry.capabilities()}
     if action == "add_record":
         record = store.add(
             request["project_id"], request["kind"], request["title"], request.get("body", ""),

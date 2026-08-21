@@ -1,5 +1,6 @@
 from mikoshi_curiosity.cognitive import CognitiveRuntime, CognitiveStore, ExecutivePlanner
 from mikoshi_curiosity.nexus_bridge import handle
+from mikoshi_curiosity.research_tools import ResearchLabToolRegistry
 
 
 def test_project_state_persists_across_store_reopen(tmp_path):
@@ -109,3 +110,40 @@ def test_research_program_advances_until_plan_approval_gate():
         assert result["cycles"][-1]["action"]["kind"] == "approve_plan"
         assert all(idea["status"] != "candidate" for idea in result["snapshot"]["idea"])
         assert result["snapshot"]["plan"][0]["status"] == "proposed"
+
+
+def test_structured_simulation_tool_persists_expected_utility():
+    with CognitiveStore() as store:
+        project = store.create_project("Simulation", "Compare outcomes")
+        store.add(project, "task", "Compare scenarios", status="ready", priority=1.0,
+                  metadata={"tool": "run_simulation", "scenarios": [
+                      {"name": "success", "probability": 0.6, "value": 10, "cost": 2},
+                      {"name": "failure", "probability": 0.4, "value": 0, "cost": 2},
+                  ]})
+        runtime = CognitiveRuntime(store, tools=ResearchLabToolRegistry(store, project).tools())
+        result = runtime.deliberate(project)
+        assert result.status == "completed"
+        assert '"expected_utility": 4.0' in result.observation
+        assert store.snapshot(project)["task"][0].status == "completed"
+
+
+def test_declarative_finite_model_tool_finds_counterexample():
+    with CognitiveStore() as store:
+        project = store.create_project("Model search", "Falsify a claim")
+        store.add(project, "task", "Check small domain", status="ready", priority=1.0,
+                  metadata={"tool": "find_countermodel", "domains": {"x": [0, 1]},
+                            "forbidden_assignments": [{"x": 1}]})
+        runtime = CognitiveRuntime(store, tools=ResearchLabToolRegistry(store, project).tools())
+        result = runtime.deliberate(project)
+        assert result.status == "completed"
+        assert '"counterexample": {"x": 1}' in result.observation
+        assert any(evidence.status == "falsified" for evidence in store.snapshot(project)["evidence"])
+
+
+def test_bridge_reports_real_capability_availability():
+    with CognitiveStore() as store:
+        project = store.create_project("Capabilities", "Inspect tools")
+        result = handle(store, {"action": "capabilities", "project_id": project})
+        assert result["capabilities"]["find_countermodel"]["available"] is True
+        assert result["capabilities"]["run_simulation"]["available"] is True
+        assert isinstance(result["capabilities"]["verify_with_lean"]["available"], bool)

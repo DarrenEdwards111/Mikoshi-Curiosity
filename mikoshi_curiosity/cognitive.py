@@ -216,7 +216,8 @@ class ExecutivePlanner:
         tasks = [x for x in snapshot["task"] if x.status == "ready"]
         if tasks:
             target = tasks[0]
-            return ProposedAction("execute_task", target.title,
+            tool = str(target.metadata.get("tool", "execute_task"))
+            return ProposedAction(tool, target.title,
                                   "Highest-priority approved task is ready.", target.id,
                                   bool(target.metadata.get("requires_approval")), target.metadata)
         if questions:

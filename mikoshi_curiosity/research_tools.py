@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import json
+import os
+import re
+import shlex
+import shutil
+import urllib.request
 from typing import Dict
 
 from mikoshi_curiosity.cognitive import CognitiveStore, ProposedAction
 from mikoshi_curiosity.engine import CuriosityEngine
+from mikoshi_curiosity.llm import (
+    AnthropicProvider, CodexCLIProvider, LLMConjectureGenerator, OllamaProvider, OpenAIProvider,
+)
+from mikoshi_curiosity.model_finder import FiniteModelFinder, FiniteModelSpec
 from mikoshi_curiosity.research import (
-    CircularityCritic, CompletenessCritic, Concept, ConceptGraph, Conjecture,
+    CircularityCritic, CommandProofAdapter, CompletenessCritic, Concept, ConceptGraph, Conjecture,
     KnownFailureCritic, ResearchEvaluator, ResearchStateSpace,
 )
 
@@ -20,6 +29,33 @@ class ResearchLabToolRegistry:
         self.store = store
         self.project_id = project_id
         self.exploration_budget = exploration_budget
+        self.provider = self._provider_from_environment()
+
+    @staticmethod
+    def _provider_from_environment():
+        selected = os.getenv("MIKOSHI_MODEL_PROVIDER", "").lower()
+        if selected == "openai" and os.getenv("OPENAI_API_KEY"):
+            return OpenAIProvider(os.environ["OPENAI_API_KEY"], os.getenv("OPENAI_MODEL", "gpt-5-mini"))
+        if selected == "anthropic" and os.getenv("ANTHROPIC_API_KEY"):
+            return AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"))
+        if selected == "ollama" and os.getenv("OLLAMA_MODEL"):
+            return OllamaProvider(os.environ["OLLAMA_MODEL"], os.getenv("OLLAMA_URL", "http://localhost:11434"))
+        if selected == "codex" and shutil.which(os.getenv("CODEX_EXECUTABLE", "codex")):
+            return CodexCLIProvider(os.getenv("CODEX_MODEL", "gpt-5.6-sol"), os.getenv("CODEX_EXECUTABLE", "codex"))
+        return None
+
+    def capabilities(self):
+        lean_command = os.getenv("MIKOSHI_LEAN_COMMAND", "lean {file}")
+        lean_executable = shlex.split(lean_command)[0] if lean_command else ""
+        return {
+            "generate_with_model": {"available": self.provider is not None},
+            "delegate_specialist": {"available": self.provider is not None},
+            "verify_with_lean": {"available": bool(lean_executable and shutil.which(lean_executable)),
+                                 "command": lean_command},
+            "find_countermodel": {"available": True, "format": "finite domains + forbidden assignments"},
+            "run_simulation": {"available": True, "format": "structured scenarios"},
+            "search_literature": {"available": True, "format": "explicit http(s) source URLs"},
+        }
 
     def tools(self) -> Dict[str, object]:
         return {
@@ -30,6 +66,11 @@ class ResearchLabToolRegistry:
             "decompose_plan": self.decompose_plan,
             "reflect": self.reflect,
             "execute_task": self.execute_task,
+            "verify_with_lean": self.verify_with_lean,
+            "find_countermodel": self.find_countermodel,
+            "run_simulation": self.run_simulation,
+            "search_literature": self.search_literature,
+            "delegate_specialist": self.delegate_specialist,
         }
 
     def investigate(self, action: ProposedAction, context):
@@ -41,7 +82,8 @@ class ResearchLabToolRegistry:
             Concept("implementation", "Respect cost, time, dependencies and operational constraints"),
         ])
         evaluator = ResearchEvaluator((CompletenessCritic(), CircularityCritic(), KnownFailureCritic()))
-        space = ResearchStateSpace(graph, evaluator=evaluator)
+        generator = LLMConjectureGenerator(self.provider) if self.provider is not None else None
+        space = ResearchStateSpace(graph, generator=generator, evaluator=evaluator)
         seed = space.add(Conjecture(
             name=target.title,
             statement=target.body or target.title,
@@ -128,6 +170,104 @@ class ResearchLabToolRegistry:
             raise ValueError("approved task requires a task_result or an external executor")
         self.store.update(task.id, status="completed")
         return str(result)
+
+    def verify_with_lean(self, action: ProposedAction, _context):
+        task = self.store.get(action.target_id)
+        source = str(task.metadata.get("lean_source", ""))
+        if not source:
+            raise ValueError("Lean verification task requires lean_source")
+        command = shlex.split(os.getenv("MIKOSHI_LEAN_COMMAND", "lean {file}"))
+        if not command or not shutil.which(command[0]):
+            raise RuntimeError(f"Lean executable is unavailable: {command[0] if command else 'unset'}")
+        conjecture = Conjecture(task.title, task.body or task.title)
+        result = CommandProofAdapter(
+            "lean", command, lambda _: source, suffix=".lean", timeout=120.0
+        ).check(conjecture)
+        self.store.update(task.id, status="completed" if result.verified else "failed")
+        self.store.add(self.project_id, "evidence", f"Lean: {task.title}", result.output,
+                       status=result.status, confidence=1.0 if result.verified else 0.9,
+                       parent_id=task.id, metadata={"adapter": result.adapter, "artifact": result.artifact})
+        return json.dumps({"adapter": result.adapter, "status": result.status}, sort_keys=True)
+
+    def find_countermodel(self, action: ProposedAction, _context):
+        task = self.store.get(action.target_id)
+        domains = task.metadata.get("domains")
+        forbidden = task.metadata.get("forbidden_assignments", [])
+        if not isinstance(domains, dict) or not domains:
+            raise ValueError("countermodel task requires non-empty domains")
+        if not isinstance(forbidden, list):
+            raise ValueError("forbidden_assignments must be a list")
+        def holds(assignment):
+            return not any(all(assignment.get(key) == value for key, value in row.items())
+                           for row in forbidden if isinstance(row, dict))
+        result = FiniteModelFinder(int(task.metadata.get("max_models", 100000))).search(
+            FiniteModelSpec(domains, holds, task.body)
+        )
+        status = "falsified" if result.status == "counterexample" else "bounded"
+        body = json.dumps({"status": result.status, "checked": result.checked,
+                           "counterexample": result.counterexample, "reason": result.reason}, sort_keys=True)
+        self.store.update(task.id, status="completed")
+        self.store.add(self.project_id, "evidence", f"Finite model: {task.title}", body,
+                       status=status, confidence=0.95, parent_id=task.id)
+        return body
+
+    def run_simulation(self, action: ProposedAction, _context):
+        task = self.store.get(action.target_id)
+        scenarios = task.metadata.get("scenarios")
+        if not isinstance(scenarios, list) or not scenarios:
+            raise ValueError("simulation task requires scenarios")
+        rows, expected = [], 0.0
+        for scenario in scenarios:
+            probability = float(scenario.get("probability", 0.0))
+            value = float(scenario.get("value", 0.0))
+            cost = float(scenario.get("cost", 0.0))
+            utility = value - cost
+            expected += probability * utility
+            rows.append({"name": str(scenario.get("name", "scenario")), "utility": utility,
+                         "weighted_utility": probability * utility})
+        body = json.dumps({"expected_utility": expected, "scenarios": rows}, sort_keys=True)
+        self.store.update(task.id, status="completed")
+        self.store.add(self.project_id, "evidence", f"Simulation: {task.title}", body,
+                       status="observed", confidence=0.7, parent_id=task.id)
+        return body
+
+    def search_literature(self, action: ProposedAction, _context):
+        task = self.store.get(action.target_id)
+        urls = task.metadata.get("urls")
+        if not isinstance(urls, list) or not urls:
+            raise ValueError("literature task requires explicit source urls")
+        sources = []
+        for url in urls[:10]:
+            if not isinstance(url, str) or not re.match(r"^https?://", url):
+                raise ValueError("literature source must be an http(s) URL")
+            request = urllib.request.Request(url, headers={"User-Agent": "MikoshiResearchLab/0.10"})
+            with urllib.request.urlopen(request, timeout=20.0) as response:
+                text = response.read(250000).decode("utf-8", errors="replace")
+            title = re.search(r"<title[^>]*>(.*?)</title>", text, re.I | re.S)
+            sources.append({"url": url, "title": re.sub(r"\s+", " ", title.group(1)).strip() if title else "",
+                            "bytes_reviewed": len(text.encode("utf-8"))})
+        body = json.dumps({"sources": sources, "count": len(sources)}, sort_keys=True)
+        self.store.update(task.id, status="completed")
+        self.store.add(self.project_id, "evidence", f"Literature: {task.title}", body,
+                       status="observed", confidence=0.65, parent_id=task.id,
+                       metadata={"provenance": [source["url"] for source in sources]})
+        return body
+
+    def delegate_specialist(self, action: ProposedAction, context):
+        if self.provider is None:
+            raise RuntimeError("no specialist model provider is configured")
+        task = self.store.get(action.target_id)
+        role = str(task.metadata.get("specialist_role", "research specialist"))
+        response = self.provider.complete(
+            f"Act as a {role}. Analyze this task, state assumptions, alternatives, evidence needed, "
+            f"failure modes and a recommended next test. Do not claim unavailable evidence.\n"
+            f"Task: {task.title}\n{task.body}\nContext: {json.dumps(context, sort_keys=True)}"
+        )
+        self.store.update(task.id, status="completed")
+        self.store.add(self.project_id, "evidence", f"Specialist: {task.title}", response,
+                       status="advisory", confidence=0.55, parent_id=task.id,
+                       metadata={"role": role, "requires_independent_verification": True})
+        return response
 
     def reflect(self, _action: ProposedAction, _context):
         reflection = self.store.add(

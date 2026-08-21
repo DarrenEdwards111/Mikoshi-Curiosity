@@ -307,6 +307,13 @@ The executive policy is intentionally transparent and replaceable. Model-backed 
 injected later, while durable state, bounded cycles and human approval remain enforced outside the
 model.
 
+Research Lab tasks may route to `verify_with_lean`, `find_countermodel`, `run_simulation`,
+`search_literature`, or `delegate_specialist` through their metadata. Model-backed generation and
+delegation are opt-in: set `MIKOSHI_MODEL_PROVIDER` to `openai`, `anthropic`, `ollama`, or `codex`
+and provide that provider's normal model/credential variables. Lean verification uses
+`MIKOSHI_LEAN_COMMAND` (default: `lean {file}`). Nexus exposes live availability so missing tools
+are visible rather than silently simulated.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
