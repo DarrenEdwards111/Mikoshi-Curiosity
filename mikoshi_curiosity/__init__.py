@@ -16,6 +16,7 @@ from mikoshi_curiosity.cognitive import (
     ExecutivePlanner,
     ProposedAction,
 )
+from mikoshi_curiosity.research_tools import ResearchLabToolRegistry
 from mikoshi_curiosity.lean_repair import LeanRepairAdapter
 from mikoshi_curiosity.llm import (
     AnthropicProvider,
@@ -137,6 +138,7 @@ __all__ = [
     "CycleResult",
     "ExecutivePlanner",
     "ProposedAction",
+    "ResearchLabToolRegistry",
     "LeanRepairAdapter",
     "AnthropicProvider",
     "CallableTextProvider",

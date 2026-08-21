@@ -13,6 +13,7 @@ import sys
 from dataclasses import asdict
 
 from mikoshi_curiosity.cognitive import CognitiveRuntime, CognitiveStore
+from mikoshi_curiosity.research_tools import ResearchLabToolRegistry
 
 
 def _serialise_snapshot(snapshot):
@@ -44,7 +45,8 @@ def handle(store: CognitiveStore, request):
         record = store.update(request["record_id"], **request.get("changes", {}))
         return {"record": asdict(record)}
     if action == "deliberate":
-        result = CognitiveRuntime(store).deliberate(
+        tools = ResearchLabToolRegistry(store, request["project_id"]).tools()
+        result = CognitiveRuntime(store, tools=tools).deliberate(
             request["project_id"], request.get("context", {}), approved=bool(request.get("approved"))
         )
         return {"cycle": asdict(result),

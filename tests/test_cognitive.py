@@ -80,3 +80,17 @@ def test_nexus_bridge_exposes_projects_without_bypassing_project_ownership():
             assert False, "cross-project update should fail"
         except ValueError as error:
             assert "does not belong" in str(error)
+
+
+def test_nexus_deliberation_runs_existing_research_lab_and_persists_ideas():
+    with CognitiveStore() as store:
+        created = handle(store, {
+            "action": "create_project", "name": "Find intervention", "purpose": "Reduce failures"
+        })
+        result = handle(store, {
+            "action": "deliberate", "project_id": created["project_id"], "context": {}
+        })
+        assert result["cycle"]["status"] == "completed"
+        assert result["cycle"]["action"]["kind"] == "investigate"
+        assert result["snapshot"]["idea"]
+        assert result["snapshot"]["question"][0]["status"] == "investigated"
