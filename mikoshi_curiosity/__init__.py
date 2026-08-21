@@ -1,6 +1,6 @@
 """Mikoshi Curiosity — domain-agnostic exploration engine."""
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 from mikoshi_curiosity.space import State, StateSpace
 from mikoshi_curiosity.engine import CuriosityEngine
@@ -8,6 +8,14 @@ from mikoshi_curiosity.memory import ExplorationMemory, MemoryEntry
 from mikoshi_curiosity.prediction import PredictionModel
 from mikoshi_curiosity.results import Discovery, ExplorationResult, ExplorationStats
 from mikoshi_curiosity.archive import ResearchArchive
+from mikoshi_curiosity.cognitive import (
+    CognitiveRecord,
+    CognitiveRuntime,
+    CognitiveStore,
+    CycleResult,
+    ExecutivePlanner,
+    ProposedAction,
+)
 from mikoshi_curiosity.lean_repair import LeanRepairAdapter
 from mikoshi_curiosity.llm import (
     AnthropicProvider,
@@ -123,6 +131,12 @@ __all__ = [
     "ExplorationResult",
     "ExplorationStats",
     "ResearchArchive",
+    "CognitiveRecord",
+    "CognitiveRuntime",
+    "CognitiveStore",
+    "CycleResult",
+    "ExecutivePlanner",
+    "ProposedAction",
     "LeanRepairAdapter",
     "AnthropicProvider",
     "CallableTextProvider",

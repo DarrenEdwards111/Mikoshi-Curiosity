@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mikoshi-curiosity"
-version = "0.9.0"
+version = "0.10.0"
 description = "Domain-agnostic curiosity engine — explore any state space and find interesting things"
 authors = [{name = "Mikoshi Ltd", email = "mikoshiuk@gmail.com"}]
 license = {text = "Apache-2.0"}

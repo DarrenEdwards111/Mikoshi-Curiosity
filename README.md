@@ -279,6 +279,34 @@ the explicit missing theorem; it cannot be inferred from one-bit correctness.
 PYTHONPATH=. python3 examples/solver_capture_experiment.py
 ```
 
+### Cognitive Project Runtime
+
+`CognitiveRuntime` turns Curiosity's research tools into a persistent project agent rather than a
+prompt/response wrapper. It stores goals, beliefs, ideas, plans, tasks, evidence, experiments,
+decisions, questions and reflections in SQLite, selects the next useful action from that state,
+requires approval for external actions, and records outcomes for later cycles.
+
+```python
+from mikoshi_curiosity import CognitiveRuntime, CognitiveStore
+
+store = CognitiveStore("research-os.db")
+runtime = CognitiveRuntime(store, tools={
+    "investigate": lambda action, context: search_evidence(action.title),
+    "evaluate_idea": lambda action, context: challenge_idea(action.target_id),
+})
+
+project = runtime.initialise(
+    "Improve trial retention",
+    "Find and validate an intervention that reduces avoidable dropout",
+)
+result = runtime.deliberate(project)
+print(result.action, result.observation)
+```
+
+The executive policy is intentionally transparent and replaceable. Model-backed planners may be
+injected later, while durable state, bounded cycles and human approval remain enforced outside the
+model.
+
 ### Core
 
 - **`State`** — A point in exploration space (id, features, embedding, metadata)
