@@ -211,6 +211,7 @@ class ExecutivePlanner:
         goals = [x for x in snapshot["goal"] if x.status == "open"]
         questions = [x for x in snapshot["question"] if x.status == "open"]
         ideas = [x for x in snapshot["idea"] if x.status in {"open", "candidate"}]
+        proposed_plans = [x for x in snapshot["plan"] if x.status == "proposed"]
         plans = [x for x in snapshot["plan"] if x.status == "approved"]
         tasks = [x for x in snapshot["task"] if x.status == "ready"]
         if tasks:
@@ -226,6 +227,11 @@ class ExecutivePlanner:
             target = ideas[0]
             return ProposedAction("evaluate_idea", target.title,
                                   "Candidate idea needs evidence and adversarial evaluation.", target.id)
+        if proposed_plans:
+            target = proposed_plans[0]
+            return ProposedAction("approve_plan", target.title,
+                                  "A proposed plan requires human authorization before execution.",
+                                  target.id, True)
         if goals and not plans:
             target = goals[0]
             return ProposedAction("form_plan", target.title,
@@ -236,7 +242,6 @@ class ExecutivePlanner:
                                   "Approved plan needs an executable next task.", target.id)
         return ProposedAction("reflect", "Review project state",
                               "No actionable item exists; consolidate learning and identify gaps.")
-
 
 class CognitiveRuntime:
     """Runs bounded, auditable deliberation cycles over persistent project state."""
@@ -278,6 +283,21 @@ class CognitiveRuntime:
                            status="open", priority=0.8, parent_id=action.target_id)
             self.store.save_cycle(project_id, action, "failed", observation, cycle_id)
             return CycleResult(cycle_id, project_id, action, "failed", observation)
+
+    def run_program(self, project_id: str, context: Optional[Mapping[str, Any]] = None,
+                    *, max_cycles: int = 12, approved: bool = False) -> List[CycleResult]:
+        """Advance repeatedly until an approval/failure/block or the bounded cycle budget."""
+        if max_cycles <= 0:
+            raise ValueError("max_cycles must be positive")
+        cycles = []
+        approval = approved
+        for _ in range(max_cycles):
+            result = self.deliberate(project_id, context, approved=approval)
+            cycles.append(result)
+            approval = False
+            if result.status in {"awaiting_approval", "failed", "blocked"}:
+                break
+        return cycles
 
     def _learn(self, project_id: str, action: ProposedAction, observation: str) -> None:
         self.store.add(project_id, "evidence", f"Outcome: {action.title}", observation,

@@ -94,3 +94,18 @@ def test_nexus_deliberation_runs_existing_research_lab_and_persists_ideas():
         assert result["cycle"]["action"]["kind"] == "investigate"
         assert result["snapshot"]["idea"]
         assert result["snapshot"]["question"][0]["status"] == "investigated"
+
+
+def test_research_program_advances_until_plan_approval_gate():
+    with CognitiveStore() as store:
+        created = handle(store, {
+            "action": "create_project", "name": "Autonomous programme", "purpose": "Find and test a route"
+        })
+        result = handle(store, {
+            "action": "run_program", "project_id": created["project_id"], "max_cycles": 12
+        })
+        assert len(result["cycles"]) > 2
+        assert result["cycles"][-1]["status"] == "awaiting_approval"
+        assert result["cycles"][-1]["action"]["kind"] == "approve_plan"
+        assert all(idea["status"] != "candidate" for idea in result["snapshot"]["idea"])
+        assert result["snapshot"]["plan"][0]["status"] == "proposed"

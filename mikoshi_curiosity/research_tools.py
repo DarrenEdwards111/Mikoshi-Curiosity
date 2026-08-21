@@ -26,6 +26,7 @@ class ResearchLabToolRegistry:
             "investigate": self.investigate,
             "evaluate_idea": self.evaluate_idea,
             "form_plan": self.form_plan,
+            "approve_plan": self.approve_plan,
             "decompose_plan": self.decompose_plan,
             "reflect": self.reflect,
             "execute_task": self.execute_task,
@@ -116,6 +117,10 @@ class ResearchLabToolRegistry:
         self.store.update(plan.id, status="active")
         return json.dumps({"task_id": task.id, "requires_approval": True}, sort_keys=True)
 
+    def approve_plan(self, action: ProposedAction, _context):
+        plan = self.store.update(action.target_id, status="approved")
+        return json.dumps({"plan_id": plan.id, "status": plan.status}, sort_keys=True)
+
     def execute_task(self, action: ProposedAction, context):
         task = self.store.get(action.target_id)
         result = context.get("task_result")
@@ -131,4 +136,3 @@ class ResearchLabToolRegistry:
             status="open", priority=0.6,
         )
         return json.dumps({"reflection_id": reflection.id}, sort_keys=True)
-

@@ -51,6 +51,14 @@ def handle(store: CognitiveStore, request):
         )
         return {"cycle": asdict(result),
                 "snapshot": _serialise_snapshot(store.snapshot(request["project_id"]))}
+    if action == "run_program":
+        tools = ResearchLabToolRegistry(store, request["project_id"]).tools()
+        cycles = CognitiveRuntime(store, tools=tools).run_program(
+            request["project_id"], request.get("context", {}),
+            max_cycles=int(request.get("max_cycles", 12)), approved=bool(request.get("approved")),
+        )
+        return {"cycles": [asdict(cycle) for cycle in cycles],
+                "snapshot": _serialise_snapshot(store.snapshot(request["project_id"]))}
     raise ValueError(f"unsupported bridge action: {action}")
 
 
